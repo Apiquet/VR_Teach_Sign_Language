@@ -22,8 +22,9 @@ public class NewBehaviourScript : MonoBehaviour
 	public Text mode;
 	public Text sign_number;
 	public Text msg;
-	int frame_number = 0;
-	Texture2D myTexture;
+    int frame_number = 0;
+    int won_count = 0;
+    Texture2D myTexture;
 	bool train_mode = true;
 	bool won_bool = false;
 	bool serie_bool = false;
@@ -185,7 +186,7 @@ public class NewBehaviourScript : MonoBehaviour
 							msg.text = "You seems to be ready for the test mode! Press SPACE to switch!";
 						}
 					}
-					if (frame_number / 50 == 1) {
+					if (frame_number / 50 >= 1) {
 						Debug.Log("Sign you must do: " + serie[letter_index]);
 						load_sign(serie[letter_index]);
 						score = compare_sign(hands);
@@ -211,15 +212,19 @@ public class NewBehaviourScript : MonoBehaviour
 					}
 				}
 			} else {
-				System.Threading.Thread.Sleep(1000);
-				letter_index++;
-				score = 0;
-				if (letter_index >= serie_size) letter_index = 0;
-				text_sign.text = "Current sign: " + serie[letter_index].ToString();
-				sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
-				display_image();
-				text_score.color = Color.gray;
-				won_bool = false;
+                won_count++;
+                if (won_count / 200 >= 1)
+                {
+                    won_count = 0;
+                    letter_index++;
+                    score = 0;
+                    if (letter_index >= serie_size) letter_index = 0;
+                    text_sign.text = "Current sign: " + serie[letter_index].ToString();
+                    sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
+                    display_image();
+                    text_score.color = Color.gray;
+                    won_bool = false;
+                }
 			}
 		}else {
 			if (Input.GetKeyDown("space")) {

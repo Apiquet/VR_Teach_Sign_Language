@@ -11,6 +11,7 @@ public class NewBehaviourScript : MonoBehaviour
 	Sign refer_sign = new Sign();
 	List<Sign> player_signs = new List<Sign>();
 	Comparator comparator = new Comparator();
+
 	public InputField sign_name_to_save;
 	float score = 0;
 	int letter_index = 0;
@@ -29,31 +30,36 @@ public class NewBehaviourScript : MonoBehaviour
 	bool won_bool = false;
 	bool serie_bool = false;
 	bool waitActive = false;
-	string images_sign_dir = "Images_sign/";
-	string images_letter_dir = "Images_letter/";
-	// Start is called before the first frame update
-	void Start()
+	static string images_dir = "Images/";
+    static string images_train_dir = images_dir + "train/";
+	static string images_test_dir = images_dir + "test/";
+	static string images_win_dir = images_dir + "win/";
+    // Start is called before the first frame update
+    void Start()
 	{
 		Debug.Log("Starting script");
 		Debug.Log("Sign to learn:");
 		load_sign_names();
 		Debug.Log(String.Join(", ", alphabet));
-
+        //creating a serie of 5 random images to train the user on batch of 5 images (batch size defined by a global variable)
 		create_serie();
 
 		text_sign.text = "Current sign: " + serie[letter_index].ToString();
 		mode.text = "Mode: Train (SPACE to switch to test mode)";
 		sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
+        // displaying the good image (image of the sign) within the scene
 		display_image();
 	}
 	void create_serie()
 	{
+        //creating a serie of 5 random images picked from our dataset
 		serie = new List<string>();
 		System.Random rnd = new System.Random();
 
 		List<int> numbers_chosen = new List<int>();
 		int number = -1;
 		for (int i = 0; i < serie_size; i++) {
+            //while loop to be sur we don't pick twice the same image
 			do {
 				number = rnd.Next(1, alphabet.Count);
 			} while (numbers_chosen.Contains(number));
@@ -62,10 +68,11 @@ public class NewBehaviourScript : MonoBehaviour
 		}
 		Debug.Log(String.Join(", ", alphabet));
 	}
-		void save_sign(List<Hand> hands,string name)
+	void save_sign(Hand hand,string name)
 	{
+        // function to save a new sign (function call when there is a hand visible and S key pressed 
 		Debug.Log("Saving gesture");
-		Gesture gesture = new Gesture(hands[0], name);
+		Gesture gesture = new Gesture(hand, name);
 		string[] json = File.ReadAllLines("sign.txt");
 		string linetoadd = gesture.save_to_json();
 		string result = string.Empty;
@@ -75,10 +82,12 @@ public class NewBehaviourScript : MonoBehaviour
 		if (json.Length > 3) result += ",";
 		result += linetoadd + "\n";
 		result += json[json.Length-1] + "\n";
+        // saving the sign into a txt file, the data is in json format
 		File.WriteAllText("sign.txt", result);
 	}
 	void load_sign_names()
 	{
+        // loading all the sign names available in our dataset
 		string[] txt_json = File.ReadAllLines("sign.txt");
 		for (int i = 2; i < txt_json.Length-1; i++) {
 			string json = txt_json[i];
@@ -96,6 +105,7 @@ public class NewBehaviourScript : MonoBehaviour
 	}
 	void load_sign(string name)
 	{
+        // loading a specific sign with all the fingers' direction
 		float[,] fingers_directions = new float[5, 3];
 		string[] txt_json = File.ReadAllLines("sign.txt");
 		int wish_index = -1;
@@ -109,7 +119,6 @@ public class NewBehaviourScript : MonoBehaviour
 		for (int i = 0; i < char_.Length; i++) {
 			json = json.Replace(char_[i], string.Empty);
 		}
-		//Debug.Log("json replaced:" + json);
 
 		string[] main_json = json.Split(new char[]  { '{' , '}', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
 		
@@ -120,10 +129,11 @@ public class NewBehaviourScript : MonoBehaviour
 		 
 
 	}
-	float compare_sign(List<Hand> hands)
+	float compare_sign(Hand hand)
 	{
+        // comparing the sign of the user (in the parameter) with a reference sign (the one he has to do)
 		Debug.Log("Compare gesture");
-		player_signs.Add(new Sign(hands[0]));
+		player_signs.Add(new Sign(hand));
 		score = comparator.compare(refer_sign, player_signs[player_signs.Count - 1]);
 
 		Debug.Log("Score: " + score);
@@ -133,9 +143,10 @@ public class NewBehaviourScript : MonoBehaviour
 	}
 	void display_image()
 	{
+        //Displaying the good image to the user: in train mode we display the sign and the meaning, in test mode we only display the meaning
 		string dir = "";
-		if (train_mode) dir = images_sign_dir;
-		else dir = images_letter_dir;
+		if (train_mode) dir = images_train_dir;
+		else dir = images_test_dir;
 
 		myTexture = Resources.Load(dir + serie[letter_index]) as Texture2D;
 		GameObject rawImage = GameObject.Find("RawImage");
@@ -143,27 +154,47 @@ public class NewBehaviourScript : MonoBehaviour
 	}
 	void letter_won()
 	{
+        // function to display an animation when the sign of the user got a succes
 		won_bool = true;
 		text_sign.text = "Current sign: " + serie[letter_index].ToString();
 		sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
 		text_score.color = Color.green;
 
-		myTexture = Resources.Load("Images/good_job") as Texture2D;
+		myTexture = Resources.Load(images_win_dir + "good_job") as Texture2D;
 		GameObject rawImage = GameObject.Find("RawImage");
 		rawImage.GetComponent<RawImage>().texture = myTexture;
 
 	}
 	void serie_won()
 	{
+        // displaying an animation when the user completed a serie 
 		serie_bool = true;
 		text_sign.text = "You won the serie";
 		sign_number.text = "Press SPACE to start a new serie";
 		text_score.text = "";
 
-		myTexture = Resources.Load("Images/win") as Texture2D;
+		myTexture = Resources.Load(images_win_dir + "win") as Texture2D;
 		GameObject rawImage = GameObject.Find("RawImage");
 		rawImage.GetComponent<RawImage>().texture = myTexture;
 
+	}
+	void play_game(Hand hand){
+		if (score > 80) {
+			letter_won();
+			if (letter_index == serie_size - 1 && !train_mode) serie_won();
+			if (letter_index == serie_size - 1 && train_mode) {
+				msg.text = "You seems to be ready for the test mode! Press SPACE to switch!";
+			}
+		}
+		if (frame_number / 50 >= 1) {
+			Debug.Log("Sign you must do: " + serie[letter_index]);
+			load_sign(serie[letter_index]);
+			score = compare_sign(hand);
+			frame_number = 0;
+		}
+		if (Input.GetKeyDown("s")) {
+			save_sign(hand, "A");
+		}
 	}
 	// Update is called once per frame
 	void Update()
@@ -173,42 +204,31 @@ public class NewBehaviourScript : MonoBehaviour
 				Controller controller = new Controller();
 				Frame frame = controller.Frame(); // controller is a Controller object
 				List<Hand> hands = frame.Hands;
+				Hand hand;
 				frame_number++;
 				if (frame.Hands.Count == 2) {
-					Debug.Log(" first hand: " + hands[0].Direction.x);
-					Debug.Log(" second hand: " + hands[1].Direction.x);
-
+					play_game(hands[1]);
 				} else if (frame.Hands.Count == 1) {
-					if (score > 85) {
-						letter_won();
-						if (letter_index == serie_size - 1 && !train_mode) serie_won();
-						if (letter_index == serie_size - 1 && train_mode) {
-							msg.text = "You seems to be ready for the test mode! Press SPACE to switch!";
-						}
-					}
-					if (frame_number / 50 >= 1) {
-						Debug.Log("Sign you must do: " + serie[letter_index]);
-						load_sign(serie[letter_index]);
-						score = compare_sign(hands);
-						frame_number = 0;
-					}
-					List<Finger> fingers = hands[0].Fingers;
-					if (Input.GetKeyDown("s")) {
-						save_sign(hands, "A");
-					} else if (Input.GetKeyDown("space")) {
-						if (train_mode) {
-							Debug.Log("You switched to Test mode");
-							mode.text = "Mode: Test (SPACE to switch to test mode)";
-							msg.text = "";
-							train_mode = false;
-							letter_index = 0;
-							display_image();
-						} else {
-							Debug.Log("You switched to Train mode");
-							mode.text = "Mode: Train (SPACE to switch to test mode)";
-							train_mode = true;
-						}
-
+					play_game(hands[0]);
+					
+				}
+				if (Input.GetKeyDown("space")) {
+					if (train_mode) {
+						Debug.Log("You switched to Test mode");
+						mode.text = "Mode: Test (SPACE to switch to train mode)";
+						msg.text = "";
+						train_mode = false;
+						letter_index = 0;
+						text_sign.text = "Current sign: " + serie[letter_index].ToString();
+						sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
+						display_image();
+					} else {
+						Debug.Log("You switched to Train mode");
+						mode.text = "Mode: Train (SPACE to switch to test mode)";
+						text_sign.text = "Current sign: " + serie[letter_index].ToString();
+						sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
+						train_mode = true;
+						display_image();
 					}
 				}
 			} else {
@@ -222,7 +242,7 @@ public class NewBehaviourScript : MonoBehaviour
                     text_sign.text = "Current sign: " + serie[letter_index].ToString();
                     sign_number.text = "Sign " + (letter_index + 1).ToString() + "/" + serie_size.ToString();
                     display_image();
-                    text_score.color = Color.gray;
+                    text_score.color = Color.black;
                     won_bool = false;
                 }
 			}

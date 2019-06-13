@@ -1,6 +1,4 @@
-C# project.
-
-Using the awesome VR and Leap Motion technologies to build a game to learn sign language.
+C# project using the awesome VR and Leap Motion technologies to build a game to learn sign language.
 
 
 # The project

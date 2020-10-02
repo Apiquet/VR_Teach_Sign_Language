@@ -10,4 +10,4 @@ Then, I needed to build a dataset of signs, easily accessible (by its name) and 
 
 You can find the whole explanation on my website through the following link:
 
-https://anthonypiquet.wordpress.com/2019/05/18/vr-game/
+https://apiquet.com/2019/05/18/vr-game/
